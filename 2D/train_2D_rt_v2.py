@@ -243,10 +243,6 @@ class my_MLP1(nn.Module):
         self.output = nn.Linear(128, output_dim1)
         self.softmax = nn.Softmax(dim=1)
         
-        self.g0 = nn.Linear(input_dim,256)
-        self.g1 = nn.Linear(256,128)
-        self.g2 = nn.Linear(128,128)
-        self.g3 = nn.Linear(128,outdim2)
         
         self.hyp = nn.Linear(128,1)
 
@@ -266,19 +262,11 @@ class my_MLP1(nn.Module):
 
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
         w_pred = self.softmax(self.output(l_4))
-        
-
-        l_g1 = self.g0(parameters)
-        
-        l_g2 = torch.sigmoid(self.g1(l_g1))
-        
-        #l_g3 = torch.sigmoid(self.g2(l_g2))
-        
-        l_out = torch.sigmoid(self.g3(l_g2))
+ 
         
         hyp = torch.sigmoid(self.hyp(l_3))*5+1
 
-        return w_pred, hyp, l_out
+        return w_pred, hyp
     
 
 class my_MLP2(nn.Module):
@@ -292,6 +280,8 @@ class my_MLP2(nn.Module):
         self.hidden3 = nn.Linear(128, 128)
         self.output = nn.Linear(128, output_dim)
         self.softmax = nn.Softmax(dim=1)
+        
+        self.hyp = nn.Linear(128,1)
 
     def forward(self, parameters):
 
@@ -309,8 +299,10 @@ class my_MLP2(nn.Module):
 
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
         w_pred = self.softmax(self.output(l_4))
+        
+        hyp = torch.sigmoid(self.hyp(l_3))*5+1
 
-        return w_pred
+        return w_pred, hyp
     
 
 def load_data_list(file_path):
@@ -364,13 +356,12 @@ def get_predicted_PMF(p_list,npdf,position,model,get_ypred_at_RT):
     p1 = p_list[position:position+1]
     w_p1 = model(p1)[0][0]
     hyp = model(p1)[1][0]
-    l_out = model(p1)[2][0]
     p1 = p1[0]
-    predicted_y1 = get_ypred_at_RT(p1,npdf,w_p1,hyp,l_out)
+    predicted_y1 = get_ypred_at_RT(p1,npdf,w_p1,hyp)
     
     return(predicted_y1)
 
-def loss_fn(p_list,y_list,npdf,w,hyp,l_out,batchsize,get_ypred_at_RT,metric):
+def loss_fn(p_list,y_list,npdf,w,hyp,batchsize,get_ypred_at_RT,metric):
     '''Calculates average metval over batch between predicted Y and y.
     yker_list and y_list are actually lists of tensor histograms with first dimension batchsize'''
     
@@ -382,17 +373,16 @@ def loss_fn(p_list,y_list,npdf,w,hyp,l_out,batchsize,get_ypred_at_RT,metric):
         p_ = p_list[b]
         w_ = w[b]
         hyp_ = hyp[b]
-        l_ = l_out[b]
         
     
-        yker_ = get_ypred_at_RT(p_,npdf,w_,hyp_,l_)
+        yker_ = get_ypred_at_RT(p_,npdf,w_,hyp_)
         
         
         met_ = get_metrics(yker_,y_,metric)
     
         
         metval += met_
-        print('training metval: ',metval)
+        #print('training metval: ',metval)
     
     return(metval/batchsize)
 
@@ -429,10 +419,10 @@ def train(parameters_tensor,y_list,npdf,model,optimizer,batchsize,get_ypred_at_R
         optimizer.zero_grad()
         
         # Perform forward pass
-        w_pred, hyp_pred, l_out = model(p)
+        w_pred, hyp_pred  = model(p)
 
         # Compute loss
-        loss = loss_fn(p,y,npdf,w_pred,hyp_pred,l_out,batchsize,get_ypred_at_RT,metric)
+        loss = loss_fn(p,y,npdf,w_pred,hyp_pred,batchsize,get_ypred_at_RT,metric)
         
         metvals.append(loss.item())
 

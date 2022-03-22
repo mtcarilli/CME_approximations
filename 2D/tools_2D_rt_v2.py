@@ -12,12 +12,12 @@ def plot_PMF(p_list,y_list,npdf,model,get_ypred_at_RT,kld=True):
     
     position = 0
     
-    y_pred = get_predicted_PMF(p_list=p_list,
+    y_pred = tr2.get_predicted_PMF(p_list=p_list,
                                npdf=npdf,position=position,model=model,get_ypred_at_RT = get_ypred_at_RT)
     
     
     
-    kld = rt1.get_metrics(y_pred,y_list,metric = 'kld')
+    kld = tr2.get_metrics(y_pred,y_list,metric = 'kld')
     print('KLD: ',kld.item())
     
     y = y_list.detach().numpy()
@@ -39,20 +39,19 @@ def plot_PMF(p_list,y_list,npdf,model,get_ypred_at_RT,kld=True):
     ax1[2].set_title('Log-absolute difference between PMFs')
 
 
-def plot_training(e_,t_,npdf=None):
+def plot_training(e_,t_,metric='kld'):
     '''Plots training data'''
     plt.figure(figsize=(9,6))
     plt.plot(range(len(e_)),e_,c='blue',label='Training Data')
     plt.plot(range(len(t_)),t_,c='red',label='Testing Data')
     plt.suptitle(f'Min KLD: {np.min(e_)}')
-    if npdf:
-        plt.title(f'NPDF = {npdf}')
+    plt.title(f'metric = {metric}')
     plt.xlabel('Epoch')
-    plt.ylabel('KL Divergence')
+    plt.ylabel(f'{metric}')
     plt.legend()
     
 
-def plot_CDF(array,xlim=None):
+def plot_CDF(array,metric='kld',xlim=None):
     '''Plots CDF'''
     cdf = np.zeros(len(array))
     array_sorted = np.sort(array)
@@ -60,7 +59,7 @@ def plot_CDF(array,xlim=None):
         cdf[i] = len(array_sorted[array_sorted<value])/len(array_sorted)
 
     plt.scatter(array_sorted,cdf,s=5)
-    plt.xlabel('KL Divergence')
+    plt.xlabel(f'{metric}')
     plt.ylabel('CDF')
    
     if xlim:
@@ -82,10 +81,10 @@ def plot_histogram(array,bins,xlim=None):
 
 
     
-def get_parameters_quantile(train_list,model,klds,quantiles = [.95,1.0]):
+def get_parameters_quantile(train_list,klds,quantiles = [.95,1.0]):
     '''Returns given percent parameters with the highest klds and klds.'''
     
-    parameters,y_list = rt1.load_training_data(train_list)
+    parameters,y_list = tr2.load_training_data(train_list)
     
     kld_low = np.quantile(klds,quantiles[0])
     kld_high = np.quantile(klds,quantiles[1])
@@ -100,13 +99,13 @@ def get_parameters_quantile(train_list,model,klds,quantiles = [.95,1.0]):
 
 
 
-def plot_param_quantiles(klds,train_list,model):
+def plot_param_quantiles(klds,train_list):
     
-    params_segment_1,klds_segment_1 = get_parameters_quantile(train_list,model,klds,quantiles=[0,.25])
-    params_segment_2,klds_segment_2 = get_parameters_quantile(train_list,model,klds,quantiles=[.25,.5])
-    params_segment_3,klds_segment_3 = get_parameters_quantile(train_list,model,klds,quantiles=[.5,.75])
-    params_segment_4,klds_segment_4 = get_parameters_quantile(train_list,model,klds,quantiles=[.75,.95])
-    params_segment_5,klds_segment_5 = get_parameters_quantile(train_list,model,klds,quantiles=[.95,1.])
+    params_segment_1,klds_segment_1 = get_parameters_quantile(train_list,klds,quantiles=[0,.25])
+    params_segment_2,klds_segment_2 = get_parameters_quantile(train_list,klds,quantiles=[.25,.5])
+    params_segment_3,klds_segment_3 = get_parameters_quantile(train_list,klds,quantiles=[.5,.75])
+    params_segment_4,klds_segment_4 = get_parameters_quantile(train_list,klds,quantiles=[.75,.95])
+    params_segment_5,klds_segment_5 = get_parameters_quantile(train_list,klds,quantiles=[.95,1.])
     
     b_1 = 10**np.array([ p[0] for p in params_segment_1 ])
     beta_1 = 10**np.array([ p[1] for p in params_segment_1  ])
