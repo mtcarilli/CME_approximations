@@ -233,7 +233,7 @@ def generate_param_vectors(N):
     
 class my_MLP1(nn.Module):
 
-    def __init__(self, input_dim, output_dim1,outdim2):
+    def __init__(self, input_dim, output_dim1):
         super().__init__()
 
         self.input = nn.Linear(input_dim, 256)
@@ -486,10 +486,10 @@ def get_data(set_size,number_of_training_files,number_of_testing_files,total_fil
 def train_MLP(train_list,test_list,num_epochs,npdf,batchsize,get_ypred_at_RT,metric,learning_rate=1e-3,MLP=1):
     
     if MLP == 1:
-        model = my_MLP1(3,npdf[0]*npdf[1],4)      # define model 
+        model = my_MLP1(3,npdf[0]*npdf[1])      # define model 
         
     if MLP == 2:
-        model = my_MLP1(3,npdf[0]*npdf[1])      # define model 
+        model = my_MLP2(3,npdf[0]*npdf[1])      # define model 
         
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) # optimizer to use 
 
