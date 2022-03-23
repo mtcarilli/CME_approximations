@@ -338,6 +338,8 @@ def get_metrics(pred,y,metric):
 
     if metric=='kld':
         return -torch.sum(y*torch.log(pred/y))
+    if metric=='kld_normalized':
+        return -torch.sum(y*torch.log(pred/y))/len(y)
     if metric=='totalse':
         return torch.sum((pred-y)**2)
     if metric=='mse':
