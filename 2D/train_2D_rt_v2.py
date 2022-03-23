@@ -233,7 +233,7 @@ def generate_param_vectors(N):
     
 class my_MLP1(nn.Module):
 
-    def __init__(self, input_dim, output_dim1):
+    def __init__(self, input_dim, output_dim1,use_softmax=True):
         super().__init__()
 
         self.input = nn.Linear(input_dim, 256)
@@ -243,7 +243,7 @@ class my_MLP1(nn.Module):
         self.output = nn.Linear(128, output_dim1)
         self.softmax = nn.Softmax(dim=1)
         
-        
+        self.use_softmax = use_softmax
         self.hyp = nn.Linear(128,1)
 
     def forward(self, parameters):
@@ -261,8 +261,10 @@ class my_MLP1(nn.Module):
         l_4 = torch.sigmoid(self.hidden3(l_3))
 
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
-        w_pred = self.softmax(self.output(l_4))
-
+        if self.use_softmax:
+            w_pred = self.softmax(self.output(l_4))
+        else:
+            w_pred = self.output(l_4)
         
         hyp = torch.sigmoid(self.hyp(l_3))*5+1
 
@@ -271,7 +273,7 @@ class my_MLP1(nn.Module):
 
 class my_MLP2(nn.Module):
 
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim,use_softmax=True):
         super().__init__()
 
         self.input = nn.Linear(input_dim, 128)
@@ -281,6 +283,7 @@ class my_MLP2(nn.Module):
         self.output = nn.Linear(128, output_dim)
         self.softmax = nn.Softmax(dim=1)
         
+        self.use_softmax = use_softmax
         self.hyp = nn.Linear(128,1)
 
     def forward(self, parameters):
@@ -298,7 +301,13 @@ class my_MLP2(nn.Module):
         l_4 = F.relu(self.hidden3(l_3))
 
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
-        w_pred = self.softmax(self.output(l_4))
+        if self.use_softmax:
+            w_pred = self.softmax(self.output(l_4))
+        else:
+            w_pred = self.output(l_4)
+        
+
+        # w_pred = self.softmax(self.output(l_4))
         
         hyp = torch.sigmoid(self.hyp(l_3))*5+1
 
@@ -485,13 +494,13 @@ def get_data(set_size,number_of_training_files,number_of_testing_files,total_fil
 
     return(train_list,test_list)
 
-def train_MLP(train_list,test_list,num_epochs,npdf,batchsize,get_ypred_at_RT,metric,learning_rate=1e-3,MLP=1):
+def train_MLP(train_list,test_list,num_epochs,npdf,batchsize,get_ypred_at_RT,metric,learning_rate=1e-3,MLP=1,use_softmax=True):
     
     if MLP == 1:
-        model = my_MLP1(3,npdf[0]*npdf[1])      # define model 
+        model = my_MLP1(3,npdf[0]*npdf[1],use_softmax=use_softmax)      # define model 
         
     if MLP == 2:
-        model = my_MLP2(3,npdf[0]*npdf[1])      # define model 
+        model = my_MLP2(3,npdf[0]*npdf[1],use_softmax=use_softmax)      # define model 
         
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) # optimizer to use 
 
