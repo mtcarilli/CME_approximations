@@ -8,6 +8,8 @@ learning_env_affine.ipynb: Notebook in which to
   4. Dependencies: need to import modules train_2D_rt_v2.py and tools_2D_rt_v2.py
  
 
-train_2D_rt_v2.py: module with functions for generating data and training model
+`train_2D_rt_v2.py`: module with functions for generating data and training model
 
-tools_2D_rt_v2.py: module with functions for plotting/visualizing performance
+`tools_2D_rt_v2.py`: module with functions for plotting/visualizing performance
+
+`training_data/`: directory for training data; empty on github for now
