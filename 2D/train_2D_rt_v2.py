@@ -262,7 +262,7 @@ class my_MLP1(nn.Module):
 
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
         w_pred = self.softmax(self.output(l_4))
- 
+
         
         hyp = torch.sigmoid(self.hyp(l_3))*5+1
 
