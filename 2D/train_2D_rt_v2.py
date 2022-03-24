@@ -498,13 +498,13 @@ def get_data(set_size,number_of_training_files,number_of_testing_files,total_fil
 
     return(train_list,test_list)
 
-def train_MLP(train_list,test_list,num_epochs,npdf,batchsize,get_ypred_at_RT,metric,learning_rate=1e-3,MLP=1,use_softmax=True):
+def train_MLP(train_list,test_list,num_epochs,npdf,batchsize,get_ypred_at_RT,metric,learning_rate=1e-3,MLP=1,softmax_type='vanilla'):
     
     if MLP == 1:
-        model = my_MLP1(3,npdf[0]*npdf[1],use_softmax=use_softmax)      # define model 
+        model = my_MLP1(3,npdf[0]*npdf[1],softmax_type=softmax_type)      # define model 
         
     if MLP == 2:
-        model = my_MLP2(3,npdf[0]*npdf[1],use_softmax=use_softmax)      # define model 
+        model = my_MLP2(3,npdf[0]*npdf[1],softmax_type=softmax_type)      # define model 
         
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate) # optimizer to use 
 
