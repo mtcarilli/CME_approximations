@@ -233,7 +233,7 @@ def generate_param_vectors(N):
     
 class my_MLP1(nn.Module):
 
-    def __init__(self, input_dim, output_dim1,use_softmax=True):
+    def __init__(self, input_dim, output_dim1,softmax_type='vanilla'):
         super().__init__()
 
         self.input = nn.Linear(input_dim, 256)
@@ -243,7 +243,7 @@ class my_MLP1(nn.Module):
         self.output = nn.Linear(128, output_dim1)
         self.softmax = nn.Softmax(dim=1)
         
-        self.use_softmax = use_softmax
+        self.softmax_type = softmax_type
         self.hyp = nn.Linear(128,1)
 
     def forward(self, parameters):
@@ -261,10 +261,12 @@ class my_MLP1(nn.Module):
         l_4 = torch.sigmoid(self.hidden3(l_3))
 
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
-        if self.use_softmax:
+        if self.softmax_type == 'vanilla':
             w_pred = self.softmax(self.output(l_4))
+        elif self.softmax_type == 'radius_one'
+            w_pred = self.softmax(self.output(l_4))*2-1
         else:
-            w_pred = self.output(l_4)
+            w_pred = self.output(l_4) #no softmax at all
         
         hyp = torch.sigmoid(self.hyp(l_3))*5+1
 
@@ -273,7 +275,7 @@ class my_MLP1(nn.Module):
 
 class my_MLP2(nn.Module):
 
-    def __init__(self, input_dim, output_dim,use_softmax=True):
+    def __init__(self, input_dim, output_dim,softmax_type='vanilla'):
         super().__init__()
 
         self.input = nn.Linear(input_dim, 128)
@@ -283,7 +285,7 @@ class my_MLP2(nn.Module):
         self.output = nn.Linear(128, output_dim)
         self.softmax = nn.Softmax(dim=1)
         
-        self.use_softmax = use_softmax
+        self.softmax_type = softmax_type
         self.hyp = nn.Linear(128,1)
 
     def forward(self, parameters):
@@ -301,10 +303,12 @@ class my_MLP2(nn.Module):
         l_4 = F.relu(self.hidden3(l_3))
 
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
-        if self.use_softmax:
+        if self.softmax_type == 'vanilla':
             w_pred = self.softmax(self.output(l_4))
+        elif self.softmax_type == 'radius_one'
+            w_pred = self.softmax(self.output(l_4))*2-1
         else:
-            w_pred = self.output(l_4)
+            w_pred = self.output(l_4) #no softmax at all
         
 
         # w_pred = self.softmax(self.output(l_4))
