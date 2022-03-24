@@ -263,7 +263,7 @@ class my_MLP1(nn.Module):
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
         if self.softmax_type == 'vanilla':
             w_pred = self.softmax(self.output(l_4))
-        elif self.softmax_type == 'radius_one'
+        elif self.softmax_type == 'radius_one':
             w_pred = self.softmax(self.output(l_4))*2-1
         else:
             w_pred = self.output(l_4) #no softmax at all
@@ -305,7 +305,7 @@ class my_MLP2(nn.Module):
         # pass out to output dimensions (predicted weights), averaged to sum to 1 with softmax
         if self.softmax_type == 'vanilla':
             w_pred = self.softmax(self.output(l_4))
-        elif self.softmax_type == 'radius_one'
+        elif self.softmax_type == 'radius_one':
             w_pred = self.softmax(self.output(l_4))*2-1
         else:
             w_pred = self.output(l_4) #no softmax at all
