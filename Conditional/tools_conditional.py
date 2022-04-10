@@ -89,7 +89,7 @@ def plot_CDF(array,metric='KLD'):
         cdf[i] = len(array_sorted[array_sorted<value])/len(array_sorted)
 
     plt.scatter(array_sorted,cdf,s=5)
-    plt.title(f'{metric CDF}')
+    plt.title(f'{metric} CDF')
     plt.xlabel(f'{metric}')
     plt.ylabel('CDF')
        
