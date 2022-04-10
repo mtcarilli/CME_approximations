@@ -89,7 +89,7 @@ def plot_CDF(array,metric='KLD'):
         cdf[i] = len(array_sorted[array_sorted<value])/len(array_sorted)
 
     plt.scatter(array_sorted,cdf,s=5)
-    plt.title(f'{metric} CDF')
+    plt.title(f'{metric CDF}')
     plt.xlabel(f'{metric}')
     plt.ylabel('CDF')
        
@@ -200,3 +200,31 @@ def plot_param_quantiles(klds,train_list,model):
     ax[0].legend()
     fig.tight_layout()
     plt.title('MLP 1 Parameters Colored by KLD Quantile')
+    
+
+
+def save_model_and_meta(model,model_config,train_config,time,path,name):
+    
+    torch.save(model.state_dict(),path+name+'_MODEL')
+    
+    meta = np.array([model_config,train_config,time])
+    np.save(path+name+'_meta',meta)
+    
+    
+class Trained_Model():
+    
+    def __init__(self, path, name):
+        
+        meta = np.load(path + name + '_meta.npy',allow_pickle=True)
+        self.model_config = meta[0]
+        self.train_config = meta[1]
+        self.time = meta[2]
+        
+        self.model = my_MLP1(4,
+                             self.model_config['output_dim'], 
+                             self.model_config['h1_dim'], 
+                             self.model_config['h2_dim'], 
+                             norm_type=self.model_config['softmax'])
+            
+        self.model.load_state_dict(torch.load(path+name+'_MODEL'))
+        self.model.eval()
