@@ -116,7 +116,7 @@ def plot_training(e_,t_,metric='kld'):
 def get_parameters_quantile(train_list,model,klds,quantiles = [.95,1.0]):
     '''Returns given percent parameters with the highest klds and klds.'''
     
-    parameters,y_list = rt1.load_training_data(train_list)
+    parameters,y_list = trc.unpack_data(train_list)
     
     kld_low = np.quantile(klds,quantiles[0])
     kld_high = np.quantile(klds,quantiles[1])

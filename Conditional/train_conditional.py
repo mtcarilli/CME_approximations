@@ -147,6 +147,12 @@ def loss_fn(ps,ys,w,hyp,get_ypred_at_RT,metric):
         ypred_ = get_ypred_at_RT(p_,w_,hyp_)
         
         met_ = get_metrics(ypred_,y_,metric)
+        if torch.isnan(met_) == True:
+            print('nan!',p_)
+
+            print('batch',b)
+            print('p right before',ps[b-1])
+            break 
         
         metval += met_
         #print('training metval: ',metval)
@@ -168,6 +174,7 @@ class my_MLP1(nn.Module):
 
         self.softmax = nn.Softmax(dim=1)
         self.sigmoid = torch.sigmoid
+
         
         self.norm_type = norm_type
         
@@ -175,10 +182,12 @@ class my_MLP1(nn.Module):
     def forward(self, inputs):
 
         # pass inputs to first layer, apply sigmoid
-        l_1 = F.sigmoid(self.input(inputs))
+        l_1 = self.sigmoid(self.input(inputs))
+        #l_1 = F.relu(self.input(inputs))
 
         # pass to second layer, apply sigmoid
-        l_2 = F.sigmoid(self.hidden(l_1))
+        l_2 = self.sigmoid(self.hidden(l_1))
+        #l_2 = F.relu(self.hidden(l_1))
         
         # pass inputs out (unnormalized)
         w_un = (self.output(l_2))
@@ -193,7 +202,7 @@ class my_MLP1(nn.Module):
       
         elif self.norm_type == 'normalize':
             # before normalization, apply sigmoid to ensure all weights are positive
-            w_pred_ = F.sigmoid(w_un)
+            w_pred_ = self.sigmoid(w_un)
             w_pred = (w_un/w_un.sum(axis=0)).sum(axis=0)
 
         else:
@@ -238,9 +247,18 @@ def run_epoch(p_list,y_list,model,optimizer,batchsize,get_ypred_at_RT,metric):
 
         # Perform backward pass
         loss.backward()
+
+        #nn.utils.clip_grad_value_(model.parameters(), clip_value=.1)
       
         # Perform optimization
         optimizer.step()
+
+        for p in model.parameters():
+            if torch.isnan(torch.sum(p.grad)):
+                print('trial',j)
+                print('parameter',p)
+                print('gradients',p.grad)
+                
     
     # calculate the average metric over the epoch 
     av_metval = torch.mean(metvals)
@@ -279,7 +297,6 @@ def train(train_list,test_list,model_config,train_config,get_ypred_at_RT):
         print('Epoch Number:',e)
 
      
-
         batch_metrics_ = []
 
         p_list,y_list = shuffle_data(train_list_)
