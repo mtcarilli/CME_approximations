@@ -271,13 +271,14 @@ def train(train_list,test_list,model_config,train_config,get_ypred_at_RT):
     train_list_ = train_list
     # define model configurations
     npdf = model_config['npdf']
+    input_dim = model_config['input_dim']
     h1_dim = model_config['h1_dim']
     h2_dim = model_config['h2_dim']
     norm_type = model_config['norm_type']
     
 
     # define model
-    model = my_MLP1(input_dim=4, output_dim=npdf,
+    model = my_MLP1(input_dim=input_dim, output_dim=npdf,
      h1_dim=h1_dim, h2_dim=h2_dim, norm_type=norm_type)
         
 

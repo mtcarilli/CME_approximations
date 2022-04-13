@@ -54,12 +54,12 @@ def plot_PMF_grid(data_list,npdf,nrows,ncols,model,get_ypred_at_RT,kld=True):
         
     fig.tight_layout()
     
-def plot_PMF(p_list,y_list,model,npdf,get_ypred_at_RT,kld=True):
+def plot_PMF(p_list,y_list,model,npdf,get_ypred_at_RT,kld=True,rand=False):
     '''Plots predicted and true PMF for given parameter, ykerlist and ylist (one p, yker, y in each list)'''
     
     
     y_pred = trc.get_predicted_PMF(p_list=p_list,
-                                y_list=y_list,npdf=npdf,position=0,model=model,get_ypred_at_RT = get_ypred_at_RT)
+                            position=0,model=model,get_ypred_at_RT = get_ypred_at_RT)
     
     
     Y = y_pred.detach().numpy() 
@@ -73,11 +73,14 @@ def plot_PMF(p_list,y_list,model,npdf,get_ypred_at_RT,kld=True):
     plt.xlabel('# mat RNA')
     plt.ylabel('probability')
 
-    plt.legend()
+    
             
     if kld == True:
         kld_ = -np.sum(y*np.log(Y/y))
         plt.title(f'KLD: {kld_:.5f}')
+
+    
+    plt.legend()
     plt.show()
 
 
