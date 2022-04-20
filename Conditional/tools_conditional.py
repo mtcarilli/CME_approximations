@@ -2,7 +2,7 @@ import numpy as np
 import random 
 import matplotlib.pyplot as plt
 import torch
-import train_conditional_mc as trc
+import train_conditional as trc
 import scipy
 
 
