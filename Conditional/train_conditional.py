@@ -48,7 +48,7 @@ def shuffle_data(data_list):
     
     random.shuffle(data_list)
     parameters = np.array([ a[0] for a in data_list ])
-    parameters_tensor = torch.from_numpy(parameters).float()
+    parameters_tensor = torch.tensor(parameters).float()
     y_tensor = [ torch.tensor(a[1]).float() for a in data_list ]
     
     return(parameters_tensor,y_tensor)
@@ -74,11 +74,22 @@ def get_metrics(ypred,y,metric):
     '''Calculates desired metric between predicted probability and y.'''
     
 
-    y = torch.flatten(y)
-    ypred = torch.flatten(ypred)
+    y = torch.flatten(y)/y.sum()
+    ypred = torch.flatten(ypred)/ypred.sum()
+    
+    if (ypred == 0).sum() > 0.: 
+        print('underflow oh no')
+    #ypred_log = torch.log(torch.flatten(ypred))
+
+    #foo = nn.KLDivLoss(reduction='sum')
 
     if metric=='kld':
+        #yay = foo(ypred.unsqueeze(0),y.unsqueeze(0))
+        #print(yay)
+        #print(-torch.sum(y*torch.log(ypred/y)))
+        
         return -torch.sum(y*torch.log(ypred/y))
+        return(yay)
     if metric=='kld_normalized':
         return -torch.sum(y*torch.log(ypred/y))/y.size(0)
     if metric=='totalse':
@@ -132,9 +143,9 @@ def loss_fn(ps,ys,w,hyp,get_ypred_at_RT,metric):
     '''Calculates average metval over batch between predicted Y and y.
     yker_list and y_list are actually lists of tensor histograms with first dimension batchsize'''
     
-    metval = torch.tensor(0.0)
-    
     batchsize = len(ps)
+
+    metval = torch.tensor(0.0)
  
 
     for b in range(batchsize):
@@ -145,13 +156,12 @@ def loss_fn(ps,ys,w,hyp,get_ypred_at_RT,metric):
         hyp_ = hyp[b]
         
         ypred_ = get_ypred_at_RT(p_,w_,hyp_)
-        
+      
         met_ = get_metrics(ypred_,y_,metric)
         if torch.isnan(met_) == True:
-            print('nan!',p_)
-
+            print('met',met_)
+            print('METRIC IS nan!',p_)
             print('batch',b)
-            print('p right before',ps[b-1])
             break 
         
         metval += met_
@@ -222,7 +232,7 @@ def run_epoch(p_list,y_list,model,optimizer,batchsize,get_ypred_at_RT,metric):
     model.train()
 
     # number of batches (data/batchsize)
-    trials = int(np.floor(p_list.size()[0] / batchsize ))
+    trials = int(np.floor(len(p_list) / batchsize ))
 
     # should this be an array or a tensor ???? 
     metvals = torch.zeros(trials)
@@ -242,8 +252,10 @@ def run_epoch(p_list,y_list,model,optimizer,batchsize,get_ypred_at_RT,metric):
     
         loss = loss_fn(ps,ys,w,hyp,get_ypred_at_RT,metric)
         
+
         # average metric for the batch j
         metvals[j] = loss.item()
+   
 
         # Perform backward pass
         loss.backward()
@@ -253,11 +265,10 @@ def run_epoch(p_list,y_list,model,optimizer,batchsize,get_ypred_at_RT,metric):
         # Perform optimization
         optimizer.step()
 
-        for p in model.parameters():
-            if torch.isnan(torch.sum(p.grad)):
-                print('trial',j)
-                print('parameter',p)
-                print('gradients',p.grad)
+            
+       # for name, param in model.named_parameters():
+            #'AFTER STEP'
+            #print(name, torch.isfinite(param.grad).all())
                 
     
     # calculate the average metric over the epoch 

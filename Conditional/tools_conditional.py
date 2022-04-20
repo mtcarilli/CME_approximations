@@ -2,10 +2,12 @@ import numpy as np
 import random 
 import matplotlib.pyplot as plt
 import torch
-import train_conditional as trc
+import train_conditional_mc as trc
+import scipy
 
 
-def plot_PMF_grid(data_list,npdf,nrows,ncols,model,get_ypred_at_RT,kld=True):
+def plot_PMF_grid(data_list,npdf,nrows,ncols,model,get_ypred_at_RT,kld=True,
+        normalize = True):
     '''Plots predicted and true PMFs for random parameters chosen from file_list.
     Number: nrows*ncols'''
     
@@ -28,6 +30,10 @@ def plot_PMF_grid(data_list,npdf,nrows,ncols,model,get_ypred_at_RT,kld=True):
     
     Y = [Y_.detach().numpy() for Y_ in Y]
     y = [y_.detach().numpy() for y_ in y]
+
+    if normalize == True:
+        y = [y_/np.sum(y_) for y_ in y]
+        Y = [Y_/np.sum(Y_) for Y_ in Y]
     
 
 
@@ -115,7 +121,58 @@ def plot_training(e_,t_,metric='kld'):
     plt.ylabel(f'{metric}')
     plt.title('Loss vs. epoch')
     plt.legend()
+
+def plot_rand(index,npdf,train_list,model,get_ypred_at_RT,hyp=1.5,rand=False,unif=False,ls=False,norm_nnls=False):
     
+    p_list,y_list = trc.unpack_data(train_list)
+    
+    w_rand = np.random.rand(npdf)
+    w_rand /= w_rand.sum()
+    
+    w_unif = np.ones(npdf)/npdf
+    
+    
+    j = index
+    
+
+    y_pred = trc.get_predicted_PMF(p_list[j:j+1],0,model,get_ypred_at_RT).detach().numpy()
+
+    if unif == True:
+        y_unif = get_ypred_at_RT(torch.tensor(train_list[j][0]),w_unif,hyp,npdf=npdf)
+        plt.plot(y_unif,'--',c='orange',label='uniform weights')
+    
+    if rand == True:
+        y_rand = get_ypred_at_RT(torch.tensor(train_list[j][0]),w_rand,hyp,npdf=npdf)
+        plt.plot(y_rand,'g--',label='random weights')
+    
+    if ls == True:
+        w_ones = np.ones(npdf)
+        y_ones = get_ypred_at_RT(torch.tensor(train_list[j][0]),w_ones,hyp,npdf=npdf,array=True).detach().numpy()
+        w_ls,res,rank,s = scipy.linalg.lstsq(y_ones.T,train_list[j][1])
+        #y_ls = get_ypred_at_RT(torch.tensor(train_list[j][0]),w_ls,hyp,npdf=npdf).detach().numpy()
+        y_ls = np.matmul(w_ls,y_ones)
+        plt.plot(y_ls,'.--',c='m',label='least squares',)
+    
+    if norm_nnls == True:
+        w_ones = np.ones(npdf)
+        y_ones = get_ypred_at_RT(torch.tensor(train_list[j][0]),w_ones,hyp,npdf=npdf,array=True).detach().numpy()
+        w_nnls,res = scipy.optimize.nnls(y_ones.T,train_list[j][1])
+        w_norm_nnls = w_nnls/w_nnls.sum()
+        #y_norm_nnls = get_ypred_at_RT(torch.tensor(train_list[j][0]),w_norm_nnls,hyp,npdf=npdf).detach().numpy()
+        y_norm_nnls = np.matmul(w_norm_nnls,y_ones)
+        plt.plot(y_norm_nnls,'.--',c='dodgerblue',label='norm nnls squares')
+        
+        
+        
+    plt.plot(train_list[j][1],'k',label='ground truth')
+    plt.plot(y_pred,'r--',label='nn predicted')
+    
+    plt.ylabel('conditional probability')
+    plt.xlabel('# mature RNA')
+    plt.title('Conditional Probability')
+    plt.legend()
+
+
 def get_parameters_quantile(train_list,model,klds,quantiles = [.95,1.0]):
     '''Returns given percent parameters with the highest klds and klds.'''
     
@@ -223,7 +280,7 @@ class Trained_Model():
         self.train_config = meta[1]
         self.time = meta[2]
         
-        self.model = my_MLP1(4,
+        self.model = my_MLP1(self.model_config['input_dim'],
                              self.model_config['output_dim'], 
                              self.model_config['h1_dim'], 
                              self.model_config['h2_dim'], 
